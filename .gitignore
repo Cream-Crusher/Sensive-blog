@@ -1,0 +1,11 @@
+__pycache__/
+/venv
+.env
+**/__pycache__
+*.sqlite3
+*cfg
+fix.py
+*__init__
+*.md
+media
+screenshots
