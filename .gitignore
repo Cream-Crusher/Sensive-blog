@@ -9,3 +9,5 @@ fix.py
 *.md
 media
 screenshots
+.vscode
+fix.py
