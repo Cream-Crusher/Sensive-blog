@@ -39,19 +39,15 @@ def get_likes_count(post):
 
 def index(request):
     most_popular_posts = []
-    likes = {}
+    num_of_likes_per_post = {}
 
     for post in Post.objects.all():
+        num_of_likes_per_post[post.title] = get_likes_count(post)
 
-        likes[post.title] = get_likes_count(post)
+    num_of_likes_per_post = sorted(num_of_likes_per_post.items(), key=lambda item: item[1])[-6:-1]
 
-    sorted_posts = sorted(likes.items(), key=lambda item: item[1])[-6:-1]  # changed name
-
-    for post in sorted_posts:
-
+    for post in num_of_likes_per_post:
         most_popular_posts.append(Post.objects.get(title=post[0]))
-
-    # конец nwcd
 
     fresh_posts = Post.objects.order_by('published_at')
     most_fresh_posts = list(fresh_posts)[-5:]
