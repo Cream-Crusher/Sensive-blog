@@ -25,8 +25,8 @@ def serialize_tag(tag):
 
 
 def index(request):
-    most_popular_posts = Post.objects.annotate(num_likes=Count('likes')).order_by('-num_likes')[:5]
-    fresh_posts = Post.objects.order_by('published_at')
+    most_popular_posts = Post.objects.prefetch_related('author').annotate(num_likes=Count('likes')).order_by('-num_likes')[:5]  # TODO .prefetch_related('author_username') Так сделать?
+    fresh_posts = Post.objects.prefetch_related('author').order_by('published_at')
     most_fresh_posts = list(fresh_posts)[-5:]
     most_popular_tags = Tag.objects.order_by('posts__-check_in')[:5]
 
@@ -58,7 +58,7 @@ def post_detail(request, slug):
     serialized_post = {
         'title': post.title,
         'text': post.text,
-        'author': post.author.username,
+        'author': post.author.username,  # TODO .prefetch_related('author_username') Так сделать?
         'comments': serialized_comments,
         'likes_amount': len(likes),
         'image_url': post.image.url if post.image else None,
