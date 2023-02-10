@@ -3,10 +3,6 @@ from blog.models import Comment, Post, Tag
 from django.db.models import Count
 
 
-def get_related_posts_count(tag):
-    return tag.posts.count()
-
-
 def serialize_post(post):
     return {
         'title': post.title,
@@ -71,10 +67,7 @@ def post_detail(request, slug):
         'tags': [serialize_tag(tag) for tag in related_tags],
     }
 
-    all_tags = Tag.objects.all()
-    popular_tags = sorted(all_tags, key=get_related_posts_count)
-    most_popular_tags = popular_tags[-5:]
-
+    most_popular_tags = Tag.objects.order_by('posts__-check_in')[-5:]
     most_popular_posts = []  # TODO. Как это посчитать?
 
     context = {
@@ -90,10 +83,7 @@ def post_detail(request, slug):
 def tag_filter(request, tag_title):
     tag = Tag.objects.get(title=tag_title)
 
-    all_tags = Tag.objects.all()
-    popular_tags = sorted(all_tags, key=get_related_posts_count)
-    most_popular_tags = popular_tags[-5:]
-
+    most_popular_tags = Tag.objects.order_by('posts__-check_in')
     most_popular_posts = []  # TODO. Как это посчитать?
 
     related_posts = tag.posts.all()[:20]
