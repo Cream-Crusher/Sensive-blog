@@ -3,12 +3,15 @@ from blog.models import Comment, Post, Tag
 from django.db.models import Count
 
 
-def serialize_post(post):
+def serialize_post_optimized(post):
+    # test = post.comments.annotate(Count('post'))
+    # print(test[0].post__count)
+
     return {
         'title': post.title,
         'teaser_text': post.text[:200],
         'author': post.author.username,
-        'comments_amount': len(Comment.objects.filter(post=post)),
+        'comments_amount': post.comments.count(),  # TODO добавить annotate(Count) ...?
         'image_url': post.image.url if post.image else None,
         'published_at': post.published_at,
         'slug': post.slug,
@@ -20,21 +23,23 @@ def serialize_post(post):
 def serialize_tag(tag):
     return {
         'title': tag.title,
-        'posts_with_tag': len(Post.objects.filter(tags=tag)),
+        'posts_with_tag':  len(Post.objects.filter(tags=tag)),
     }
 
 
 def index(request):
-    most_popular_posts = Post.objects.prefetch_related('author').annotate(num_likes=Count('likes')).order_by('-num_likes')[:5]  # TODO .prefetch_related('author_username') Так сделать?
+    most_popular_posts = Post.objects.prefetch_related('author').annotate(num_likes=Count('likes')).order_by('-num_likes')[:5]
+    #  most_popular_posts = Post.objects.popular()[:5]
+
     fresh_posts = Post.objects.prefetch_related('author').order_by('published_at')
     most_fresh_posts = list(fresh_posts)[-5:]
     most_popular_tags = Tag.objects.order_by('posts__-check_in')[:5]
 
     context = {
         'most_popular_posts': [
-            serialize_post(post) for post in most_popular_posts
+            serialize_post_optimized(post) for post in most_popular_posts
         ],
-        'page_posts': [serialize_post(post) for post in most_fresh_posts],
+        'page_posts': [serialize_post_optimized(post) for post in most_fresh_posts],
         'popular_tags': [serialize_tag(tag) for tag in most_popular_tags],
     }
     return render(request, 'index.html', context)
@@ -44,6 +49,7 @@ def post_detail(request, slug):
     post = Post.objects.get(slug=slug)
     comments = Comment.objects.filter(post=post)
     serialized_comments = []
+
     for comment in comments:
         serialized_comments.append({
             'text': comment.text,
@@ -58,7 +64,7 @@ def post_detail(request, slug):
     serialized_post = {
         'title': post.title,
         'text': post.text,
-        'author': post.author.username,  # TODO .prefetch_related('author_username') Так сделать?
+        'author': post.author.username,
         'comments': serialized_comments,
         'likes_amount': len(likes),
         'image_url': post.image.url if post.image else None,
@@ -74,7 +80,7 @@ def post_detail(request, slug):
         'post': serialized_post,
         'popular_tags': [serialize_tag(tag) for tag in most_popular_tags],
         'most_popular_posts': [
-            serialize_post(post) for post in most_popular_posts
+            serialize_post_optimized(post) for post in most_popular_posts
         ],
     }
     return render(request, 'post-details.html', context)
@@ -91,9 +97,9 @@ def tag_filter(request, tag_title):
     context = {
         'tag': tag.title,
         'popular_tags': [serialize_tag(tag) for tag in most_popular_tags],
-        'posts': [serialize_post(post) for post in related_posts],
+        'posts': [serialize_post_optimized(post) for post in related_posts],
         'most_popular_posts': [
-            serialize_post(post) for post in most_popular_posts
+            serialize_post_optimized(post) for post in most_popular_posts
         ],
     }
     return render(request, 'posts-list.html', context)

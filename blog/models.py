@@ -1,6 +1,19 @@
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
+# from django.db.models import Count  # TODO удалить или нет?
+
+
+# class TagQuerySet(models.QuerySet):  # TODO поменять имя
+
+#     def popular(self):
+#         return self.prefetch_related('author').annotate(num_likes=Count('likes')).order_by('-num_likes')  # most_popular_posts
+
+
+# class PostQuerySet(models.QuerySet):  # TODO используется?
+
+#     def year(self, year):
+#         return self.filter(published_at__year=year).order_by('published_at')
 
 
 class Post(models.Model):
@@ -9,6 +22,9 @@ class Post(models.Model):
     slug = models.SlugField('Название в виде url', max_length=200)
     image = models.ImageField('Картинка')
     published_at = models.DateTimeField('Дата и время публикации')
+
+    # objects = PostQuerySet.as_manager()   # TODO используется?
+    # objects = TagQuerySet.as_manager()
 
     author = models.ForeignKey(
         User,
@@ -58,6 +74,7 @@ class Tag(models.Model):
 class Comment(models.Model):
     post = models.ForeignKey(
         'Post',
+        related_name='comments',
         on_delete=models.CASCADE,
         verbose_name='Пост, к которому написан')
     author = models.ForeignKey(
