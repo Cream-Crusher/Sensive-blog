@@ -4,11 +4,10 @@ from django.contrib.auth.models import User
 # from django.db.models import Count  # TODO удалить или нет?
 
 
-# class TagQuerySet(models.QuerySet):  # TODO поменять имя
+class TagQuerySet(models.QuerySet):  # TODO поменять имя
 
-#     def popular(self):
-#         return self.prefetch_related('author').annotate(num_likes=Count('likes')).order_by('-num_likes')  # most_popular_posts
-
+    def popular(self):
+        return self.order_by('posts__-check_in')
 
 # class PostQuerySet(models.QuerySet):  # TODO используется?
 
@@ -55,6 +54,7 @@ class Post(models.Model):
 
 class Tag(models.Model):
     title = models.CharField('Тег', max_length=20, unique=True)
+    objects = TagQuerySet.as_manager()
 
     def __str__(self):
         return self.title
