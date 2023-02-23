@@ -1,7 +1,7 @@
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
-# from django.db.models import Count  # TODO удалить или нет?
+from django.db.models import Count  # TODO удалить или нет?
 
 
 class TagQuerySet(models.QuerySet):  # TODO поменять имя
@@ -9,10 +9,22 @@ class TagQuerySet(models.QuerySet):  # TODO поменять имя
     def popular(self):
         return self.order_by('posts__-check_in')
 
-# class PostQuerySet(models.QuerySet):  # TODO используется?
 
-#     def year(self, year):
-#         return self.filter(published_at__year=year).order_by('published_at')
+class PostQuerySet(models.QuerySet):
+
+    def fetch_with_comments_count(self):
+        return self.annotate(likes_count=Count('likes')).order_by('-likes_count')
+
+    def popular(self):
+        most_popular_posts_ids = [post.id for post in self]
+        posts_with_comments = Post.objects.filter(id__in=most_popular_posts_ids).annotate(comments_count=Count('comments'))
+        ids_and_comments = posts_with_comments.values_list('id', 'comments_count')
+        count_for_id = dict(ids_and_comments)
+
+        for post in self:
+            post.comments_count = count_for_id[post.id]
+
+        return self
 
 
 class Post(models.Model):
@@ -22,8 +34,8 @@ class Post(models.Model):
     image = models.ImageField('Картинка')
     published_at = models.DateTimeField('Дата и время публикации')
 
-    # objects = PostQuerySet.as_manager()   # TODO используется?
-    # objects = TagQuerySet.as_manager()
+    objects = PostQuerySet.as_manager()
+    # objects = TagQuerySet.as_manager()  # TODO используется?
 
     author = models.ForeignKey(
         User,
