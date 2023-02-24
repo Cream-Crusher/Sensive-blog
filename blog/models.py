@@ -12,7 +12,7 @@ class TagQuerySet(models.QuerySet):  # TODO поменять имя
 
 class PostQuerySet(models.QuerySet):
 
-    def fetch_with_comments_count(self):
+    def fetch_with_comments_count(self):  # TODO Написать, почему лучше шаг 13
         return self.annotate(likes_count=Count('likes')).order_by('-likes_count')
 
     def popular(self):
