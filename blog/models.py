@@ -7,15 +7,15 @@ from django.db.models import Count  # TODO удалить или нет?
 class TagQuerySet(models.QuerySet):  # TODO поменять имя
 
     def popular(self):
-        return self.order_by('posts__-check_in')
+        return self.order_by('posts__-check_in')[:5]
 
 
 class PostQuerySet(models.QuerySet):
 
-    def fetch_with_comments_count(self):  # TODO Написать, почему лучше шаг 13
-        return self.annotate(likes_count=Count('likes')).order_by('-likes_count')
+    def popular(self):  # TODO Написать, почему лучше шаг 13
+        return self.annotate(likes_count=Count('likes')).order_by('-likes_count')[:5]
 
-    def popular(self):
+    def fetch_with_comments_count(self):
         most_popular_posts_ids = [post.id for post in self]
         posts_with_comments = Post.objects.filter(id__in=most_popular_posts_ids).annotate(comments_count=Count('comments'))
         ids_and_comments = posts_with_comments.values_list('id', 'comments_count')
