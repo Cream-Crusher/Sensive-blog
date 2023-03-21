@@ -1,19 +1,32 @@
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
-from django.db.models import Count  # TODO удалить или нет?
+from django.db.models import Count
 
 
 class TagQuerySet(models.QuerySet):  # TODO поменять имя
 
     def popular(self):
-        return self.order_by('posts__-check_in')[:5]
+        return self.order_by('posts__-check_in')
+
+    def fetch_with_posts_count(self):  # TODO Удалить
+        """Использовать когда нужно ДВА annotate(), которые  порождают неимоверное количество
+        записей для каждого поста: количество лайков умножается на количество постов."""
+        tags_ids = [tag.id for tag in self]
+        tags_with_posts = Tag.objects.filter(id__in=tags_ids) \
+            .annotate(posts_count=Count('posts', distinct=True))
+        ids_and_posts = dict(tags_with_posts.values_list('id', 'posts_count'))
+        for tag in self:
+            tag.posts_count = ids_and_posts[tag.id]
+
+        return self
 
 
 class PostQuerySet(models.QuerySet):
 
-    def popular(self):  # TODO Написать, почему лучше шаг 13
-        return self.annotate(likes_count=Count('likes')).order_by('-likes_count')[:5]
+    def popular(self):
+
+        return self.annotate(likes_count=Count('likes')).order_by('-likes_count')
 
     def fetch_with_comments_count(self):
         most_popular_posts_ids = [post.id for post in self]
@@ -35,7 +48,6 @@ class Post(models.Model):
     published_at = models.DateTimeField('Дата и время публикации')
 
     objects = PostQuerySet.as_manager()
-    # objects = TagQuerySet.as_manager()  # TODO используется?
 
     author = models.ForeignKey(
         User,
