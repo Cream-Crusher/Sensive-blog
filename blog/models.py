@@ -1,15 +1,15 @@
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
-from django.db.models import Count
+from django.db.models import Count, Prefetch
 
 
-class TagQuerySet(models.QuerySet):  # TODO поменять имя
+class TagQuerySet(models.QuerySet):
 
     def popular(self):
         return self.order_by('posts__-check_in')
 
-    def fetch_with_posts_count(self):  # TODO Удалить
+    def fetch_with_posts_count(self):
 
         tags_ids = [tag.id for tag in self]
         tags_with_posts = Tag.objects.filter(id__in=tags_ids) \
@@ -22,6 +22,11 @@ class TagQuerySet(models.QuerySet):  # TODO поменять имя
 
 
 class PostQuerySet(models.QuerySet):
+
+    def loading_db_queries(self):
+        prefetch = Prefetch('tags', queryset=Tag.objects.annotate(posts_count=Count('posts')))
+
+        return self.prefetch_related('author', prefetch)
 
     def popular(self):
 
