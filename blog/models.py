@@ -10,8 +10,7 @@ class TagQuerySet(models.QuerySet):  # TODO поменять имя
         return self.order_by('posts__-check_in')
 
     def fetch_with_posts_count(self):  # TODO Удалить
-        """Использовать когда нужно ДВА annotate(), которые  порождают неимоверное количество
-        записей для каждого поста: количество лайков умножается на количество постов."""
+
         tags_ids = [tag.id for tag in self]
         tags_with_posts = Tag.objects.filter(id__in=tags_ids) \
             .annotate(posts_count=Count('posts', distinct=True))
