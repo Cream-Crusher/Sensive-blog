@@ -49,9 +49,9 @@ def index(request):
 
 def post_detail(request, slug):
     serialized_comments = []
+
     most_popular_posts = Post.objects.popular()[:5].loading_db_queries().fetch_with_comments_count()
     most_popular_tags = Tag.objects.popular()[:5].fetch_with_posts_count()
-
     move_number_posts(most_popular_posts, most_popular_tags)
 
     post = Post.objects.get(slug=slug)
@@ -88,7 +88,6 @@ def post_detail(request, slug):
 
 def tag_filter(request, tag_title):
     tag = Tag.objects.get(title=tag_title)
-
     most_popular_posts = Post.objects.popular()[:20].loading_db_queries().fetch_with_comments_count()
     most_popular_tags = Tag.objects.popular()[:20].fetch_with_posts_count()
 
