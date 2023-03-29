@@ -1,19 +1,20 @@
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
-from django.db.models import Count  # TODO удалить или нет?
+from django.db.models import Count, Prefetch  # TODO удалить или нет?
 
 
 class TagQuerySet(models.QuerySet):  # TODO поменять имя
 
     def popular(self):
-        return self.order_by('posts__-check_in')[:5]
+
+        return self.annotate(posts_count=Count('posts')).order_by('-posts_count')[:5]
 
 
 class PostQuerySet(models.QuerySet):
 
     def popular(self):  # TODO Написать, почему лучше шаг 13
-        return self.annotate(likes_count=Count('likes')).order_by('-likes_count')[:5]
+        return self.annotate(likes_count=Count('likes')).order_by('-likes_count')
 
     def fetch_with_comments_count(self):
         most_popular_posts_ids = [post.id for post in self]
