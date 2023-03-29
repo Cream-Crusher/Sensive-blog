@@ -1,10 +1,10 @@
 from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
-from django.db.models import Count, Prefetch  # TODO удалить или нет?
+from django.db.models import Count, Prefetch
 
 
-class TagQuerySet(models.QuerySet):  # TODO поменять имя
+class TagQuerySet(models.QuerySet):
 
     def popular(self):
 
@@ -13,10 +13,20 @@ class TagQuerySet(models.QuerySet):  # TODO поменять имя
 
 class PostQuerySet(models.QuerySet):
 
-    def popular(self):  # TODO Написать, почему лучше шаг 13
+    def loading_db_queries(self):
+        prefetch = Prefetch('tags', queryset=Tag.objects.annotate(posts_count=Count('posts')))
+
+        return self.prefetch_related('author', prefetch)
+
+    def popular(self):
+
         return self.annotate(likes_count=Count('likes')).order_by('-likes_count')[:5]
 
     def fetch_with_comments_count(self):
+        '''
+            1)Использовать когда нужно два annotate()
+            2)позволяет избежать большое кол-во записей для постов(каждого отдельно)
+        '''
         most_popular_posts_ids = [post.id for post in self]
         posts_with_comments = Post.objects.filter(id__in=most_popular_posts_ids).annotate(comments_count=Count('comments'))
         ids_and_comments = posts_with_comments.values_list('id', 'comments_count')
@@ -36,7 +46,6 @@ class Post(models.Model):
     published_at = models.DateTimeField('Дата и время публикации')
 
     objects = PostQuerySet.as_manager()
-    # objects = TagQuerySet.as_manager()  # TODO используется?
 
     author = models.ForeignKey(
         User,

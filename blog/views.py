@@ -1,6 +1,5 @@
 from django.shortcuts import render, get_object_or_404
 from blog.models import Comment, Post, Tag
-from django.db.models import Count, Prefetch
 
 
 def serialize_post(post):
@@ -27,8 +26,7 @@ def serialize_tag(tag):
 
 
 def get_most_popular_posts_and_tags():
-    prefetch = Prefetch('tags', queryset=Tag.objects.annotate(posts_count=Count('posts')))
-    most_popular_posts = Post.objects.popular().prefetch_related('author', prefetch).fetch_with_comments_count()
+    most_popular_posts = Post.objects.popular().loading_db_queries().fetch_with_comments_count()
     most_popular_tags = Tag.objects.popular()
 
     return most_popular_posts, most_popular_tags
@@ -88,11 +86,16 @@ def post_detail(request, slug):
 def tag_filter(request, tag_title):
     tag = get_object_or_404(Tag, title=tag_title)
     most_popular_posts, most_popular_tags = get_most_popular_posts_and_tags()
+    related_posts = tag.posts.popular()[:20]
+
+    for related_post in related_posts:
+        related_post.comments_count = [post.comments_count for post in most_popular_posts]
+        related_post.posts_count = [post.posts_count for post in related_posts]
 
     context = {
         'tag': tag.title,
         'popular_tags': [serialize_tag(tag) for tag in most_popular_tags],
-        'posts': [serialize_post(post) for post in most_popular_posts],
+        'posts': [serialize_post(post) for post in related_posts],
         'most_popular_posts': [
             serialize_post(post) for post in most_popular_posts
         ],
