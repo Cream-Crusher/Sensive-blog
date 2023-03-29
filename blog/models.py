@@ -7,18 +7,8 @@ from django.db.models import Count, Prefetch
 class TagQuerySet(models.QuerySet):
 
     def popular(self):
-        return self.order_by('posts')
 
-    def fetch_with_posts_count(self):
-
-        tags_ids = [tag.id for tag in self]
-        tags_with_posts = Tag.objects.filter(id__in=tags_ids) \
-            .annotate(posts_count=Count('posts', distinct=True))
-        ids_and_posts = dict(tags_with_posts.values_list('id', 'posts_count'))
-        for tag in self:
-            tag.posts_count = ids_and_posts[tag.id]
-
-        return self
+        return self.annotate(posts_count=Count('posts')).order_by('-posts_count')[:5]
 
 
 class PostQuerySet(models.QuerySet):
@@ -29,7 +19,8 @@ class PostQuerySet(models.QuerySet):
         return self.prefetch_related('author', prefetch)
 
     def popular(self):
-        return self.annotate(likes_count=Count('likes')).order_by('-likes_count')
+
+        return self.annotate(likes_count=Count('likes')).order_by('-likes_count')[:5]
 
     def fetch_with_comments_count(self):
         '''
