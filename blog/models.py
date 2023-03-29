@@ -14,7 +14,7 @@ class TagQuerySet(models.QuerySet):  # TODO поменять имя
 class PostQuerySet(models.QuerySet):
 
     def popular(self):  # TODO Написать, почему лучше шаг 13
-        return self.annotate(likes_count=Count('likes')).order_by('-likes_count')
+        return self.annotate(likes_count=Count('likes')).order_by('-likes_count')[:5]
 
     def fetch_with_comments_count(self):
         most_popular_posts_ids = [post.id for post in self]
