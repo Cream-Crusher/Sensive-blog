@@ -86,11 +86,10 @@ def post_detail(request, slug):
 def tag_filter(request, tag_title):
     tag = get_object_or_404(Tag, title=tag_title)
     most_popular_posts, most_popular_tags = get_most_popular_posts_and_tags()
-    related_posts = tag.posts.popular()[:20]
+    related_posts = tag.posts.loading_db_queries()[:20]
 
     for related_post in related_posts:
         related_post.comments_count = [post.comments_count for post in most_popular_posts]
-        related_post.posts_count = [post.posts_count for post in related_posts]
 
     context = {
         'tag': tag.title,
