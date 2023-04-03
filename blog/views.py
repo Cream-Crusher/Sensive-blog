@@ -34,12 +34,14 @@ def get_most_popular_posts_and_tags():
 
 def index(request):
     most_popular_posts, most_popular_tags = get_most_popular_posts_and_tags()
+    fresh_posts = Post.objects.order_by('published_at').loading_db_queries().fetch_with_comments_count()
+    most_fresh_posts = list(fresh_posts)[-5:]
 
     context = {
         'most_popular_posts': [
             serialize_post(post) for post in most_popular_posts
         ],
-        'page_posts': [serialize_post(post) for post in most_popular_posts],
+        'page_posts': [serialize_post(post) for post in most_fresh_posts],
         'popular_tags': [serialize_tag(tag) for tag in most_popular_tags],
     }
     return render(request, 'index.html', context)
