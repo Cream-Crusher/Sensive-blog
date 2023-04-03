@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from blog.models import Comment, Post, Tag
+from blog.models import Post, Tag
 
 
 def serialize_post(post):
@@ -89,10 +89,7 @@ def post_detail(request, slug):
 def tag_filter(request, tag_title):
     tag = get_object_or_404(Tag, title=tag_title)
     most_popular_posts, most_popular_tags = get_most_popular_posts_and_tags()
-    related_posts = tag.posts.loading_db_queries()[:20]
-
-    for related_post in related_posts:
-        related_post.comments_count = [post.comments_count for post in most_popular_posts]
+    related_posts = tag.posts.loading_db_queries().fetch_with_comments_count()[:20]
 
     context = {
         'tag': tag.title,
